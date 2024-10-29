@@ -14,27 +14,10 @@
 
     <script>
         let isRecording = false;
-        let lastBeta = null;
-        let rotationThreshold = 15; // Umbral para considerar que el dispositivo está girando
         let mediaRecorder;
         let recordedChunks = [];
 
-        // Verificar si el dispositivo soporta eventos de orientación
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const { beta } = event;
-                if (lastBeta !== null) {
-                    const delta = Math.abs(beta - lastBeta);
-                    if (delta > rotationThreshold && !isRecording) {
-                        startRecording();
-                    }
-                }
-                lastBeta = beta;
-            });
-        } else {
-            alert('Tu dispositivo no soporta el evento de orientación.');
-        }
-
+        document.getElementById('startRecording').addEventListener('click', startRecording);
         document.getElementById('stopRecording').addEventListener('click', stopRecording);
 
         function startRecording() {
