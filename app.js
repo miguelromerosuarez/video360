@@ -1,22 +1,15 @@
+// Reinicio del código para grabación de video
 let mediaRecorder;
 let recordedChunks = [];
 let stream;
-let currentFacingMode = 'environment';
 
 // Añadir eventos a los botones para escoger la cámara
-document.addEventListener('DOMContentLoaded', () => {
-    const frontButton = document.getElementById('frontCameraButton');
-    const backButton = document.getElementById('backCameraButton');
-    
-    if (frontButton && backButton) {
-        frontButton.addEventListener('click', () => {
-            currentFacingMode = 'user';
-        });
+document.getElementById('frontCameraButton').addEventListener('click', () => {
+    currentFacingMode = 'user';
+});
 
-        backButton.addEventListener('click', () => {
-            currentFacingMode = 'environment';
-        });
-    }
+document.getElementById('backCameraButton').addEventListener('click', () => {
+    currentFacingMode = 'environment';
 });
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
@@ -58,7 +51,7 @@ function startVideoRecording() {
         videoElement.classList.remove('hidden');
         videoElement.play();
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
         recordedChunks = []; // Reset recorded chunks
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -81,6 +74,13 @@ function startVideoRecording() {
         console.error('Error accessing camera:', error);
         alert('No se pudo acceder a la cámara. Verifica los permisos del navegador y asegúrate de estar usando HTTPS.');
         document.getElementById('startRecording').disabled = false;
+
+        // Intentar acceder nuevamente después de un breve retraso
+        setTimeout(() => {
+            if (confirm('¿Intentar nuevamente acceder a la cámara?')) {
+                startVideoRecording();
+            }
+        }, 3000);
     });
 }
 
@@ -93,7 +93,7 @@ function stopRecording() {
         document.getElementById('downloadVideo').classList.remove('hidden');
 
         // Mostrar el video grabado para previsualización
-        const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const recordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
         const recordedUrl = URL.createObjectURL(recordedBlob);
         const previewVideo = document.createElement('video');
         previewVideo.controls = true;
@@ -109,12 +109,12 @@ function downloadVideo() {
         return;
     }
 
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = 'video.webm';
+    a.download = 'video.mp4';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
