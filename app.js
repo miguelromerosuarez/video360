@@ -63,7 +63,7 @@ function startVideoRecording() {
     })
     .catch(error => {
         console.error('Error accessing camera:', error);
-        alert('No se pudo acceder a la cámara. Por favor, revisa los permisos del navegador y asegúrate de estar usando HTTPS. También verifica que no haya ninguna otra aplicación usando la cámara.');
+        alert('No se pudo acceder a la cámara. Verifica los permisos del navegador y asegúrate de estar usando HTTPS.');
         document.getElementById('startRecording').disabled = false;
     });
 }
