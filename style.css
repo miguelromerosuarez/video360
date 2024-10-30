@@ -1,63 +1,48 @@
 body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: #121212;
-    color: white;
-}
-
-.top-container {
+    font-family: Arial, sans-serif;
     text-align: center;
-    padding: 20px;
-    background-color: #1c1c1c;
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.5);
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
 }
 
-.controls {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
+h1 {
+    margin-top: 20px;
+    color: #333;
 }
 
 button {
+    margin: 10px;
     padding: 10px 20px;
-    margin: 0 10px;
     font-size: 16px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    color: white;
 }
 
 #startRecording {
-    background-color: #28a745;
+    background-color: #4CAF50;
+    color: white;
 }
 
 #stopRecording {
-    background-color: #dc3545;
+    background-color: #f44336;
+    color: white;
 }
 
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+#downloadVideo {
+    background-color: #008CBA;
+    color: white;
 }
 
-.bottom-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: black;
+.hidden {
+    display: none;
 }
 
 video {
-    width: 100%;
+    width: 80%;
     height: auto;
-    max-width: 100%;
-    max-height: 100%;
-    border: none;
-    display: none; /* Se muestra cuando la grabación comienza */
-    background-color: black;
+    margin-top: 20px;
+    border: 2px solid #333;
+    border-radius: 10px;
 }
