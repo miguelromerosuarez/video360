@@ -1,4 +1,3 @@
-// Reinicio del código para grabación de video
 let mediaRecorder;
 let recordedChunks = [];
 let stream;
