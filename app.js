@@ -7,13 +7,6 @@ document.getElementById('startRecording').addEventListener('click', startRecordi
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
-async function loadFFmpeg() {
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
-    await ffmpeg.load();
-    return ffmpeg;
-}
-
 function startRecording() {
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
@@ -84,25 +77,12 @@ function stopRecording() {
     }
 }
 
-async function downloadVideo() {
-    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+function downloadVideo() {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
-
-    // Cargar FFmpeg para editar el video
-    const ffmpeg = await loadFFmpeg();
-    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(url));
-
-    // Aplicar el efecto de cámara lenta
-    await ffmpeg.run('-i', 'input.mp4', '-filter:v', 'setpts=2.0*PTS', 'output.mp4');
-
-    // Leer el archivo de salida y crear un blob para descargar
-    const data = ffmpeg.FS('readFile', 'output.mp4');
-    const slowMotionBlob = new Blob([data.buffer], { type: 'video/mp4' });
-    const downloadUrl = URL.createObjectURL(slowMotionBlob);
-
     const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = 'video_slowmotion.mp4';
+    a.href = url;
+    a.download = 'video_slowmotion.webm';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
