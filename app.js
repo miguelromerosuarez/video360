@@ -50,6 +50,9 @@ function startVideoRecording() {
         };
         mediaRecorder.start();
 
+        // Detener la grabación automáticamente después de 10 segundos
+        setTimeout(stopRecording, 10000);
+
         document.getElementById('stopRecording').disabled = false;
         document.getElementById('stopRecording').classList.remove('hidden');
     })
