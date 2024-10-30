@@ -71,83 +71,110 @@ function stopRecording() {
             // Crear un objeto URL para el video grabado
             const url = URL.createObjectURL(blob);
 
+            // Procesar el video grabado para aplicar los efectos deseados
+            processVideoEffects(blob);
+        };
+    }
+}
+
+function processVideoEffects(blob) {
+    const videoElement = document.createElement('video');
+    videoElement.src = URL.createObjectURL(blob);
+    videoElement.muted = true;
+    videoElement.play();
+
+    videoElement.onloadeddata = async () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+
+        const slowMotionFrames = [];
+        const reverseFrames = [];
+
+        // Capturar los primeros 5 segundos en cámara lenta
+        videoElement.currentTime = 0;
+        while (videoElement.currentTime < 5) {
+            await new Promise(resolve => {
+                videoElement.onseeked = () => {
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    slowMotionFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                    videoElement.currentTime += 0.1;
+                    resolve();
+                };
+            });
+        }
+
+        // Capturar los siguientes 5 segundos en reversa
+        videoElement.currentTime = 5;
+        while (videoElement.currentTime < 10) {
+            await new Promise(resolve => {
+                videoElement.onseeked = () => {
+                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                    reverseFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                    videoElement.currentTime += 0.1;
+                    resolve();
+                };
+            });
+        }
+
+        reverseFrames.reverse();
+
+        // Crear un nuevo video combinando los efectos
+        const finalFrames = [...slowMotionFrames, ...reverseFrames];
+        const outputCanvas = document.createElement('canvas');
+        const outputCtx = outputCanvas.getContext('2d');
+        outputCanvas.width = canvas.width;
+        outputCanvas.height = canvas.height;
+
+        const stream = outputCanvas.captureStream(30);
+        const outputRecorder = new MediaRecorder(stream);
+        const outputChunks = [];
+
+        outputRecorder.ondataavailable = e => {
+            if (e.data.size > 0) {
+                outputChunks.push(e.data);
+            }
+        };
+
+        outputRecorder.onstop = () => {
+            const outputBlob = new Blob(outputChunks, { type: 'video/mp4' });
+            const outputUrl = URL.createObjectURL(outputBlob);
+
             // Mostrar el botón de descarga del video
             const downloadButton = document.getElementById('downloadVideo');
             downloadButton.classList.remove('hidden');
-            downloadButton.dataset.url = url;
+            downloadButton.dataset.url = outputUrl;
 
-            // Mostrar el video grabado
+            // Mostrar el video procesado
             const processedVideo = document.getElementById('processedVideo');
-            processedVideo.src = url;
+            processedVideo.src = outputUrl;
             processedVideo.classList.remove('hidden');
-
-            recordedChunks = [];
-            
-            document.getElementById('stopRecording').disabled = true;
-            document.getElementById('stopRecording').classList.add('hidden');
-            const videoElement = document.getElementById('video');
-            videoElement.pause();
-            stream.getTracks().forEach(track => track.stop()); // Detener el stream de la cámara
-            videoElement.srcObject = null;
-            document.getElementById('startRecording').disabled = false;
-            document.getElementById('startRecording').innerText = 'Start Recording';
-            isRecording = false;
         };
-    }
+
+        outputRecorder.start();
+
+        let frameIndex = 0;
+        function drawFinalFrame() {
+            if (frameIndex < finalFrames.length) {
+                outputCtx.putImageData(finalFrames[frameIndex], 0, 0);
+                frameIndex++;
+                requestAnimationFrame(drawFinalFrame);
+            } else {
+                outputRecorder.stop();
+            }
+        }
+
+        drawFinalFrame();
+    };
 }
 
 function downloadVideo() {
     const url = document.getElementById('downloadVideo').dataset.url;
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'video.mp4';
+    a.download = 'video_processed.mp4';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-
-    // Aplicar los efectos: cámara lenta en los primeros 5 segundos y reversa en los siguientes 5 segundos
-    processVideoEffects(url);
-}
-
-async function processVideoEffects(url) {
-    const videoElement = document.createElement('video');
-    videoElement.src = url;
-    await videoElement.play();
-    videoElement.pause();
-    videoElement.currentTime = 0;
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = videoElement.videoWidth;
-    canvas.height = videoElement.videoHeight;
-    const frameRate = 30; // Ajustar la tasa de cuadros por segundo
-    const frames = [];
-
-    // Capturar cuadros para los primeros 5 segundos en cámara lenta
-    videoElement.addEventListener('seeked', function collectFrames() {
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-        if (videoElement.currentTime < 5) {
-            videoElement.currentTime += 1 / frameRate;
-        } else {
-            // Invertir el video para los siguientes 5 segundos
-            frames.reverse();
-            playFrames(frames, canvas);
-        }
-    });
-}
-
-function playFrames(frames, canvas) {
-    const ctx = canvas.getContext('2d');
-    let index = 0;
-
-    function drawFrame() {
-        if (index < frames.length) {
-            ctx.putImageData(frames[index], 0, 0);
-            index++;
-            requestAnimationFrame(drawFrame);
-        }
-    }
-
-    drawFrame();
 }
