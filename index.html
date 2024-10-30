@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video 360 Recording Webapp</title>
+    <title>Video Recording App</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Video 360 Recording Webapp</h1>
-    <video id="video" autoplay playsinline class="hidden"></video>
-    <button id="startRecording">Start Recording</button>
-    <button id="stopRecording" class="hidden" disabled>Stop Recording</button>
-    <button id="downloadVideo" class="hidden">Download Video</button>
+    <h1>Video Recording App</h1>
+    
+    <!-- Contenedor para la selección de la cámara -->
+    <div id="cameraSelectionContainer">
+        <button id="frontCameraButton">Usar Cámara Frontal</button>
+        <button id="backCameraButton">Usar Cámara Trasera</button>
+    </div>
+
+    <!-- Vista previa del video -->
+    <video id="video" class="hidden" autoplay></video>
+
+    <!-- Controles para grabar y descargar -->
+    <div id="controls">
+        <button id="startRecording">Iniciar Grabación</button>
+        <button id="stopRecording" class="hidden" disabled>Detener Grabación</button>
+        <button id="downloadVideo" class="hidden">Descargar Video</button>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
