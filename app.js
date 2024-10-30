@@ -83,13 +83,15 @@ function downloadVideo() {
         return;
     }
 
-    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
-    a.download = 'video.mp4';
+    a.download = 'video_slowmotion.webm';
     document.body.appendChild(a);
     a.click();
+    window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
 
     // Limpiar después de la descarga
