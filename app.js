@@ -50,8 +50,11 @@ function startVideoRecording() {
         };
         mediaRecorder.start();
 
-        // Detener la grabación automáticamente después de 10 segundos
-        setTimeout(stopRecording, 10000);
+        // Detener la grabación automáticamente después de 10 segundos y mostrar el botón de descarga
+        setTimeout(() => {
+            stopRecording();
+            document.getElementById('downloadVideo').classList.remove('hidden');
+        }, 10000);
 
         document.getElementById('stopRecording').disabled = false;
         document.getElementById('stopRecording').classList.remove('hidden');
@@ -68,7 +71,7 @@ function stopRecording() {
         mediaRecorder.stop();
         stream.getTracks().forEach(track => track.stop());
         document.getElementById('stopRecording').disabled = true;
-        document.getElementById('downloadVideo').classList.remove('hidden');
+        document.getElementById('stopRecording').classList.add('hidden');
     }
 }
 
