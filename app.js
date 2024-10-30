@@ -10,22 +10,8 @@ document.getElementById('downloadVideo').addEventListener('click', downloadVideo
 function startRecording() {
     isRecording = true;
     document.getElementById('startRecording').disabled = true;
-    
-    // Mostrar cuenta regresiva de 3 segundos
-    let countdown = 3;
-    const countdownInterval = setInterval(() => {
-        document.getElementById('startRecording').innerText = `Starting in ${countdown}`;
-        countdown--;
+    document.getElementById('stopRecording').classList.remove('hidden');
 
-        if (countdown < 0) {
-            clearInterval(countdownInterval);
-            document.getElementById('startRecording').innerText = 'Recording...';
-            startVideoRecording();
-        }
-    }, 1000);
-}
-
-function startVideoRecording() {
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false
@@ -45,18 +31,11 @@ function startVideoRecording() {
             }
         };
         mediaRecorder.start();
-
-        // Detener la grabación automáticamente después de 10 segundos
-        setTimeout(stopRecording, 10000);
-
-        document.getElementById('stopRecording').disabled = false;
-        document.getElementById('stopRecording').classList.remove('hidden');
     })
     .catch(error => {
         console.error('Error accessing camera:', error);
         alert('No se pudo acceder a la cámara. Verifica los permisos del navegador y asegúrate de estar usando HTTPS.');
         document.getElementById('startRecording').disabled = false;
-        document.getElementById('startRecording').innerText = 'Start Recording';
         isRecording = false;
     });
 }
@@ -64,109 +43,104 @@ function startVideoRecording() {
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+        document.getElementById('stopRecording').classList.add('hidden');
 
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: 'video/mp4' });
-
-            // Crear un objeto URL para el video grabado
-            const url = URL.createObjectURL(blob);
-
-            // Procesar el video grabado para aplicar los efectos deseados
             processVideoEffects(blob);
         };
     }
 }
 
-function processVideoEffects(blob) {
+async function processVideoEffects(blob) {
     const videoElement = document.createElement('video');
     videoElement.src = URL.createObjectURL(blob);
-    videoElement.muted = true;
-    videoElement.play();
+    await videoElement.play();
+    videoElement.pause();
+    videoElement.currentTime = 0;
 
-    videoElement.onloadeddata = async () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
 
-        const slowMotionFrames = [];
-        const reverseFrames = [];
+    const slowMotionFrames = [];
+    const reverseFrames = [];
 
-        // Capturar los primeros 5 segundos en cámara lenta
-        videoElement.currentTime = 0;
-        while (videoElement.currentTime < 5) {
-            await new Promise(resolve => {
-                videoElement.onseeked = () => {
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    slowMotionFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-                    videoElement.currentTime += 0.1;
-                    resolve();
-                };
-            });
+    // Capturar los primeros 5 segundos en cámara lenta
+    videoElement.currentTime = 0;
+    while (videoElement.currentTime < 5) {
+        await new Promise(resolve => {
+            videoElement.onseeked = () => {
+                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                slowMotionFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                videoElement.currentTime += 0.1;
+                resolve();
+            };
+        });
+    }
+
+    // Capturar los siguientes 5 segundos en reversa
+    videoElement.currentTime = 5;
+    while (videoElement.currentTime < 10) {
+        await new Promise(resolve => {
+            videoElement.onseeked = () => {
+                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                reverseFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+                videoElement.currentTime += 0.1;
+                resolve();
+            };
+        });
+    }
+
+    reverseFrames.reverse();
+
+    // Crear un nuevo video combinando los efectos
+    const finalFrames = [...slowMotionFrames, ...reverseFrames];
+    const outputCanvas = document.createElement('canvas');
+    const outputCtx = outputCanvas.getContext('2d');
+    outputCanvas.width = canvas.width;
+    outputCanvas.height = canvas.height;
+
+    const stream = outputCanvas.captureStream(30);
+    const outputRecorder = new MediaRecorder(stream);
+    const outputChunks = [];
+
+    outputRecorder.ondataavailable = e => {
+        if (e.data.size > 0) {
+            outputChunks.push(e.data);
         }
-
-        // Capturar los siguientes 5 segundos en reversa
-        videoElement.currentTime = 5;
-        while (videoElement.currentTime < 10) {
-            await new Promise(resolve => {
-                videoElement.onseeked = () => {
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    reverseFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-                    videoElement.currentTime += 0.1;
-                    resolve();
-                };
-            });
-        }
-
-        reverseFrames.reverse();
-
-        // Crear un nuevo video combinando los efectos
-        const finalFrames = [...slowMotionFrames, ...reverseFrames];
-        const outputCanvas = document.createElement('canvas');
-        const outputCtx = outputCanvas.getContext('2d');
-        outputCanvas.width = canvas.width;
-        outputCanvas.height = canvas.height;
-
-        const stream = outputCanvas.captureStream(30);
-        const outputRecorder = new MediaRecorder(stream);
-        const outputChunks = [];
-
-        outputRecorder.ondataavailable = e => {
-            if (e.data.size > 0) {
-                outputChunks.push(e.data);
-            }
-        };
-
-        outputRecorder.onstop = () => {
-            const outputBlob = new Blob(outputChunks, { type: 'video/mp4' });
-            const outputUrl = URL.createObjectURL(outputBlob);
-
-            // Mostrar el botón de descarga del video
-            const downloadButton = document.getElementById('downloadVideo');
-            downloadButton.classList.remove('hidden');
-            downloadButton.dataset.url = outputUrl;
-
-            // Mostrar el video procesado
-            const processedVideo = document.getElementById('processedVideo');
-            processedVideo.src = outputUrl;
-            processedVideo.classList.remove('hidden');
-        };
-
-        outputRecorder.start();
-
-        let frameIndex = 0;
-        function drawFinalFrame() {
-            if (frameIndex < finalFrames.length) {
-                outputCtx.putImageData(finalFrames[frameIndex], 0, 0);
-                frameIndex++;
-                requestAnimationFrame(drawFinalFrame);
-            } else {
-                outputRecorder.stop();
-            }
-        }
-
-        drawFinalFrame();
     };
+
+    outputRecorder.onstop = () => {
+        const outputBlob = new Blob(outputChunks, { type: 'video/mp4' });
+        const outputUrl = URL.createObjectURL(outputBlob);
+
+        // Mostrar el botón de descarga del video
+        const downloadButton = document.getElementById('downloadVideo');
+        downloadButton.classList.remove('hidden');
+        downloadButton.dataset.url = outputUrl;
+
+        // Mostrar el video procesado
+        const processedVideo = document.getElementById('processedVideo');
+        processedVideo.src = outputUrl;
+        processedVideo.classList.remove('hidden');
+    };
+
+    outputRecorder.start();
+
+    let frameIndex = 0;
+    function drawFinalFrame() {
+        if (frameIndex < finalFrames.length) {
+            outputCtx.putImageData(finalFrames[frameIndex], 0, 0);
+            frameIndex++;
+            requestAnimationFrame(drawFinalFrame);
+        } else {
+            outputRecorder.stop();
+        }
+    }
+
+    drawFinalFrame();
 }
 
 function downloadVideo() {
