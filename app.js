@@ -55,7 +55,7 @@ function startVideoRecording() {
 
         // Detener la grabación automáticamente después de 10 segundos
         setTimeout(() => {
-            if (mediaRecorder.state === 'recording') {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
                 stopRecording();
             }
         }, 10000);
@@ -68,7 +68,7 @@ function startVideoRecording() {
 }
 
 function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
         stream.getTracks().forEach(track => track.stop());
         document.getElementById('stopRecording').disabled = true;
