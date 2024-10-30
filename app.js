@@ -32,7 +32,7 @@ function startRecording() {
 
 function startVideoRecording() {
     navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { facingMode: { exact: 'environment' } },
         audio: false
     })
     .then(mediaStream => {
