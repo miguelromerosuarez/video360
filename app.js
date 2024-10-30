@@ -4,12 +4,19 @@ let stream;
 let currentFacingMode = 'environment';
 
 // Añadir eventos a los botones para escoger la cámara
-document.getElementById('frontCameraButton').addEventListener('click', () => {
-    currentFacingMode = 'user';
-});
+document.addEventListener('DOMContentLoaded', () => {
+    const frontButton = document.getElementById('frontCameraButton');
+    const backButton = document.getElementById('backCameraButton');
+    
+    if (frontButton && backButton) {
+        frontButton.addEventListener('click', () => {
+            currentFacingMode = 'user';
+        });
 
-document.getElementById('backCameraButton').addEventListener('click', () => {
-    currentFacingMode = 'environment';
+        backButton.addEventListener('click', () => {
+            currentFacingMode = 'environment';
+        });
+    }
 });
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
@@ -41,7 +48,7 @@ function startRecording() {
 
 function startVideoRecording() {
     navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: currentFacingMode } },
+        video: { facingMode: currentFacingMode },
         audio: false
     })
     .then(mediaStream => {
@@ -51,7 +58,7 @@ function startVideoRecording() {
         videoElement.classList.remove('hidden');
         videoElement.play();
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4; codecs=avc1' });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
         recordedChunks = []; // Reset recorded chunks
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -86,7 +93,7 @@ function stopRecording() {
         document.getElementById('downloadVideo').classList.remove('hidden');
 
         // Mostrar el video grabado para previsualización
-        const recordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
+        const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
         const recordedUrl = URL.createObjectURL(recordedBlob);
         const previewVideo = document.createElement('video');
         previewVideo.controls = true;
@@ -102,12 +109,12 @@ function downloadVideo() {
         return;
     }
 
-    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = 'video.mp4';
+    a.download = 'video.webm';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
