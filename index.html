@@ -84,20 +84,21 @@
                     // Crear un objeto URL para el video grabado
                     const url = URL.createObjectURL(blob);
 
-                    // Crear un elemento de video para procesar la reproducción en cámara lenta y en reversa
+                    // Crear un enlace para descargar el video
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'video.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    // Crear un elemento de video para reproducir el video grabado
                     const processedVideo = document.getElementById('processedVideo');
                     processedVideo.src = url;
                     processedVideo.classList.remove('hidden');
 
-                    // Reproducir el video en cámara lenta y luego en reversa
-                    processedVideo.onplay = () => {
-                        processedVideo.playbackRate = 0.5; // Reproducir a mitad de velocidad
-                    };
-
-                    processedVideo.onended = () => {
-                        // Reproducir el video en reversa
-                        reverseVideo(blob);
-                    };
+                    // Reproducir el video en cámara lenta
+                    processedVideo.playbackRate = 0.5;
 
                     recordedChunks = [];
                     
@@ -113,53 +114,6 @@
                     isRecording = false;
                 };
             }
-        }
-
-        function reverseVideo(blob) {
-            const processedVideo = document.getElementById('processedVideo');
-            const videoURL = URL.createObjectURL(blob);
-            const videoElement = document.createElement('video');
-            videoElement.src = videoURL;
-
-            videoElement.onloadedmetadata = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = videoElement.videoWidth;
-                canvas.height = videoElement.videoHeight;
-                const frameRate = 30; // Ajustar la tasa de cuadros por segundo
-                const frames = [];
-
-                videoElement.play();
-                videoElement.pause();
-                videoElement.currentTime = 0;
-
-                videoElement.addEventListener('seeked', function collectFrames() {
-                    ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                    frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-                    if (videoElement.currentTime < videoElement.duration) {
-                        videoElement.currentTime += 1 / frameRate;
-                    } else {
-                        videoElement.removeEventListener('seeked', collectFrames);
-                        playFramesReversed(frames, canvas, processedVideo);
-                    }
-                });
-            };
-        }
-
-        function playFramesReversed(frames, canvas, videoElement) {
-            const ctx = canvas.getContext('2d');
-            let index = frames.length - 1;
-
-            function drawFrame() {
-                if (index >= 0) {
-                    ctx.putImageData(frames[index], 0, 0);
-                    videoElement.src = canvas.toDataURL();
-                    index--;
-                    requestAnimationFrame(drawFrame);
-                }
-            }
-
-            drawFrame();
         }
     </script>
 </body>
