@@ -7,6 +7,13 @@ document.getElementById('startRecording').addEventListener('click', startRecordi
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
+async function loadFFmpeg() {
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+    await ffmpeg.load();
+    return ffmpeg;
+}
+
 function startRecording() {
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
@@ -77,27 +84,29 @@ function stopRecording() {
     }
 }
 
-function downloadVideo() {
+async function downloadVideo() {
     const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
-    const videoElement = document.createElement('video');
-    videoElement.src = url;
-    videoElement.playbackRate = 0.5; // Configurar el video a cámara lenta
 
-    // Esperar a que el video esté listo para exportarlo
-    videoElement.onloadedmetadata = () => {
-        const slowMotionBlob = new Blob(recordedChunks, { type: 'video/mp4' });
-        const downloadUrl = URL.createObjectURL(slowMotionBlob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = 'video_slowmotion.mp4';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    const ffmpeg = await loadFFmpeg();
+    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(url));
 
-        // Limpiar después de la descarga
-        recordedChunks = [];
-        document.getElementById('startRecording').disabled = false;
-        document.getElementById('downloadVideo').classList.add('hidden');
-    };
+    // Aplicar el efecto de cámara lenta
+    await ffmpeg.run('-i', 'input.mp4', '-filter:v', 'setpts=2.0*PTS', 'output.mp4');
+
+    const data = ffmpeg.FS('readFile', 'output.mp4');
+    const slowMotionBlob = new Blob([data.buffer], { type: 'video/mp4' });
+    const downloadUrl = URL.createObjectURL(slowMotionBlob);
+
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = 'video_slowmotion.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Limpiar después de la descarga
+    recordedChunks = [];
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('downloadVideo').classList.add('hidden');
 }
