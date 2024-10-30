@@ -2,6 +2,8 @@
 let mediaRecorder;
 let recordedChunks = [];
 let stream;
+let currentFacingMode = 'environment';
+let isRecording = false;
 
 // Añadir eventos a los botones para escoger la cámara
 document.getElementById('frontCameraButton').addEventListener('click', () => {
@@ -12,11 +14,25 @@ document.getElementById('backCameraButton').addEventListener('click', () => {
     currentFacingMode = 'environment';
 });
 
-document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
+// Escuchar el movimiento del dispositivo
+window.addEventListener('devicemotion', handleMotion);
+
+function handleMotion(event) {
+    const acceleration = event.accelerationIncludingGravity;
+    const threshold = 15; // Umbral para iniciar la grabación (ajustable)
+
+    if (Math.abs(acceleration.x) > threshold || Math.abs(acceleration.y) > threshold || Math.abs(acceleration.z) > threshold) {
+        if (!isRecording) {
+            startRecording();
+        }
+    }
+}
+
 function startRecording() {
+    isRecording = true;
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
     const countdownDisplay = document.createElement('div');
@@ -124,4 +140,5 @@ function downloadVideo() {
     recordedChunks = [];
     document.getElementById('startRecording').disabled = false;
     document.getElementById('downloadVideo').classList.add('hidden');
+    isRecording = false;
 }
