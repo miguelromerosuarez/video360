@@ -42,7 +42,7 @@ function startVideoRecording() {
         videoElement.classList.remove('hidden');
         videoElement.play();
 
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
                 recordedChunks.push(event.data);
@@ -78,11 +78,16 @@ function stopRecording() {
 }
 
 function downloadVideo() {
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    if (recordedChunks.length === 0) {
+        alert('No hay datos grabados disponibles para descargar.');
+        return;
+    }
+
+    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'video_slowmotion.webm';
+    a.download = 'video.mp4';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
