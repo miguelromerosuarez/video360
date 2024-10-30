@@ -80,15 +80,24 @@ function stopRecording() {
 function downloadVideo() {
     const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'video.mp4';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const videoElement = document.createElement('video');
+    videoElement.src = url;
+    videoElement.playbackRate = 0.5; // Configurar el video a cámara lenta
 
-    // Limpiar después de la descarga
-    recordedChunks = [];
-    document.getElementById('startRecording').disabled = false;
-    document.getElementById('downloadVideo').classList.add('hidden');
+    // Esperar a que el video esté listo para exportarlo
+    videoElement.onloadedmetadata = () => {
+        const slowMotionBlob = new Blob(recordedChunks, { type: 'video/mp4' });
+        const downloadUrl = URL.createObjectURL(slowMotionBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'video_slowmotion.mp4';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Limpiar después de la descarga
+        recordedChunks = [];
+        document.getElementById('startRecording').disabled = false;
+        document.getElementById('downloadVideo').classList.add('hidden');
+    };
 }
