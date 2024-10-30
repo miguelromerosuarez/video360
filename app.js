@@ -6,8 +6,6 @@ let stream;
 document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
-document.getElementById('playSlow').addEventListener('click', playInSlowMotion);
-document.getElementById('playReverse').addEventListener('click', playInReverse);
 
 function startRecording() {
     isRecording = true;
@@ -83,10 +81,6 @@ function stopRecording() {
             processedVideo.src = url;
             processedVideo.classList.remove('hidden');
 
-            // Mostrar botones de reproducción lenta y en reversa
-            document.getElementById('playSlow').classList.remove('hidden');
-            document.getElementById('playReverse').classList.remove('hidden');
-
             recordedChunks = [];
             
             document.getElementById('stopRecording').disabled = true;
@@ -110,34 +104,50 @@ function downloadVideo() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+
+    // Aplicar los efectos: cámara lenta en los primeros 5 segundos y reversa en los siguientes 5 segundos
+    processVideoEffects(url);
 }
 
-function playInSlowMotion() {
-    const processedVideo = document.getElementById('processedVideo');
-    processedVideo.playbackRate = 0.5; // Reproducir a la mitad de la velocidad
-    processedVideo.play();
+async function processVideoEffects(url) {
+    const videoElement = document.createElement('video');
+    videoElement.src = url;
+    await videoElement.play();
+    videoElement.pause();
+    videoElement.currentTime = 0;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+    const frameRate = 30; // Ajustar la tasa de cuadros por segundo
+    const frames = [];
+
+    // Capturar cuadros para los primeros 5 segundos en cámara lenta
+    videoElement.addEventListener('seeked', function collectFrames() {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        if (videoElement.currentTime < 5) {
+            videoElement.currentTime += 1 / frameRate;
+        } else {
+            // Invertir el video para los siguientes 5 segundos
+            frames.reverse();
+            playFrames(frames, canvas);
+        }
+    });
 }
 
-function playInReverse() {
-    const processedVideo = document.getElementById('processedVideo');
-    processedVideo.pause();
-    const context = new AudioContext();
-    const source = context.createBufferSource();
-    fetch(processedVideo.src)
-        .then(response => response.arrayBuffer())
-        .then(arrayBuffer => context.decodeAudioData(arrayBuffer))
-        .then(audioBuffer => {
-            const reversedBuffer = context.createBuffer(
-                audioBuffer.numberOfChannels,
-                audioBuffer.length,
-                audioBuffer.sampleRate
-            );
-            for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
-                const channelData = audioBuffer.getChannelData(i);
-                reversedBuffer.copyToChannel(channelData.reverse(), i);
-            }
-            source.buffer = reversedBuffer;
-            source.connect(context.destination);
-            source.start(0);
-        });
+function playFrames(frames, canvas) {
+    const ctx = canvas.getContext('2d');
+    let index = 0;
+
+    function drawFrame() {
+        if (index < frames.length) {
+            ctx.putImageData(frames[index], 0, 0);
+            index++;
+            requestAnimationFrame(drawFrame);
+        }
+    }
+
+    drawFrame();
 }
