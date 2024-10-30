@@ -1,27 +1,13 @@
-// Añadir evento para detectar la orientación del dispositivo
 let isRecording = false;
-let lastBeta = null;
-let rotationThreshold = 10; // Umbral para considerar que el dispositivo está girando
-
-if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', (event) => {
-        const { beta } = event;
-        if (lastBeta !== null) {
-            const delta = Math.abs(beta - lastBeta);
-            if (delta > rotationThreshold && !isRecording) {
-                startRecording();
-            }
-        }
-        lastBeta = beta;
-    });
-} else {
-    alert('Tu dispositivo no soporta el evento de orientación.');
-}
-
-document.getElementById('stopRecording').addEventListener('click', stopRecording);
-
 let mediaRecorder;
 let recordedChunks = [];
+let stream;
+
+document.getElementById('startRecording').addEventListener('click', startRecording);
+document.getElementById('stopRecording').addEventListener('click', stopRecording);
+document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
+document.getElementById('playSlow').addEventListener('click', playInSlowMotion);
+document.getElementById('playReverse').addEventListener('click', playInReverse);
 
 function startRecording() {
     isRecording = true;
@@ -42,12 +28,12 @@ function startRecording() {
 }
 
 function startVideoRecording() {
-    // Solicitar acceso a la cámara
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false
     })
-    .then(stream => {
+    .then(mediaStream => {
+        stream = mediaStream;
         const videoElement = document.getElementById('video');
         videoElement.srcObject = stream;
         videoElement.classList.remove('hidden'); // Mostrar el video en tiempo real
@@ -84,14 +70,22 @@ function stopRecording() {
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: 'video/mp4' });
 
-            // Crear un enlace para descargar el video directamente
+            // Crear un objeto URL para el video grabado
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'video.mp4';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+
+            // Mostrar el botón de descarga del video
+            const downloadButton = document.getElementById('downloadVideo');
+            downloadButton.classList.remove('hidden');
+            downloadButton.dataset.url = url;
+
+            // Mostrar el video grabado
+            const processedVideo = document.getElementById('processedVideo');
+            processedVideo.src = url;
+            processedVideo.classList.remove('hidden');
+
+            // Mostrar botones de reproducción lenta y en reversa
+            document.getElementById('playSlow').classList.remove('hidden');
+            document.getElementById('playReverse').classList.remove('hidden');
 
             recordedChunks = [];
             
@@ -99,11 +93,51 @@ function stopRecording() {
             document.getElementById('stopRecording').classList.add('hidden');
             const videoElement = document.getElementById('video');
             videoElement.pause();
-            videoElement.srcObject = null; // Detener el stream de la cámara
-            videoElement.classList.add('hidden');
+            stream.getTracks().forEach(track => track.stop()); // Detener el stream de la cámara
+            videoElement.srcObject = null;
             document.getElementById('startRecording').disabled = false;
             document.getElementById('startRecording').innerText = 'Start Recording';
             isRecording = false;
         };
     }
+}
+
+function downloadVideo() {
+    const url = document.getElementById('downloadVideo').dataset.url;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'video.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function playInSlowMotion() {
+    const processedVideo = document.getElementById('processedVideo');
+    processedVideo.playbackRate = 0.5; // Reproducir a la mitad de la velocidad
+    processedVideo.play();
+}
+
+function playInReverse() {
+    const processedVideo = document.getElementById('processedVideo');
+    processedVideo.pause();
+    const context = new AudioContext();
+    const source = context.createBufferSource();
+    fetch(processedVideo.src)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => context.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+            const reversedBuffer = context.createBuffer(
+                audioBuffer.numberOfChannels,
+                audioBuffer.length,
+                audioBuffer.sampleRate
+            );
+            for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                const channelData = audioBuffer.getChannelData(i);
+                reversedBuffer.copyToChannel(channelData.reverse(), i);
+            }
+            source.buffer = reversedBuffer;
+            source.connect(context.destination);
+            source.start(0);
+        });
 }
