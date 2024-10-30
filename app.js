@@ -55,7 +55,9 @@ function startVideoRecording() {
 
         // Detener la grabación automáticamente después de 10 segundos
         setTimeout(() => {
-            stopRecording();
+            if (mediaRecorder.state === 'recording') {
+                stopRecording();
+            }
         }, 10000);
     })
     .catch(error => {
