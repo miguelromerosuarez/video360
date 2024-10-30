@@ -10,8 +10,22 @@ document.getElementById('downloadVideo').addEventListener('click', downloadVideo
 function startRecording() {
     isRecording = true;
     document.getElementById('startRecording').disabled = true;
-    document.getElementById('stopRecording').classList.remove('hidden');
+    
+    // Mostrar cuenta regresiva de 3 segundos
+    let countdown = 3;
+    const countdownInterval = setInterval(() => {
+        document.getElementById('startRecording').innerText = `Starting in ${countdown}`;
+        countdown--;
 
+        if (countdown < 0) {
+            clearInterval(countdownInterval);
+            document.getElementById('startRecording').innerText = 'Recording...';
+            startVideoRecording();
+        }
+    }, 1000);
+}
+
+function startVideoRecording() {
     navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment" },
         audio: false
@@ -31,6 +45,9 @@ function startRecording() {
             }
         };
         mediaRecorder.start();
+
+        document.getElementById('stopRecording').disabled = false;
+        document.getElementById('stopRecording').classList.remove('hidden');
     })
     .catch(error => {
         console.error('Error accessing camera:', error);
@@ -43,6 +60,7 @@ function startRecording() {
 function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+        document.getElementById('stopRecording').disabled = true;
         document.getElementById('stopRecording').classList.add('hidden');
 
         mediaRecorder.onstop = () => {
