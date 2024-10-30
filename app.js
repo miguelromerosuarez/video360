@@ -8,12 +8,15 @@ let isRecording = false;
 // Añadir eventos a los botones para escoger la cámara
 document.getElementById('frontCameraButton').addEventListener('click', () => {
     currentFacingMode = 'user';
+    resetRecordingState();
 });
 
 document.getElementById('backCameraButton').addEventListener('click', () => {
     currentFacingMode = 'environment';
+    resetRecordingState();
 });
 
+document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
@@ -32,6 +35,7 @@ function handleMotion(event) {
 }
 
 function startRecording() {
+    if (isRecording) return;
     isRecording = true;
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
@@ -67,7 +71,7 @@ function startVideoRecording() {
         videoElement.classList.remove('hidden');
         videoElement.play();
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
         recordedChunks = []; // Reset recorded chunks
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -90,13 +94,7 @@ function startVideoRecording() {
         console.error('Error accessing camera:', error);
         alert('No se pudo acceder a la cámara. Verifica los permisos del navegador y asegúrate de estar usando HTTPS.');
         document.getElementById('startRecording').disabled = false;
-
-        // Intentar acceder nuevamente después de un breve retraso
-        setTimeout(() => {
-            if (confirm('¿Intentar nuevamente acceder a la cámara?')) {
-                startVideoRecording();
-            }
-        }, 3000);
+        isRecording = false;
     });
 }
 
@@ -109,7 +107,7 @@ function stopRecording() {
         document.getElementById('downloadVideo').classList.remove('hidden');
 
         // Mostrar el video grabado para previsualización
-        const recordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
+        const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
         const recordedUrl = URL.createObjectURL(recordedBlob);
         const previewVideo = document.createElement('video');
         previewVideo.controls = true;
@@ -117,6 +115,7 @@ function stopRecording() {
         previewVideo.style.marginTop = '20px';
         document.body.appendChild(previewVideo);
     }
+    isRecording = false;
 }
 
 function downloadVideo() {
@@ -125,12 +124,12 @@ function downloadVideo() {
         return;
     }
 
-    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = 'video.mp4';
+    a.download = 'video.webm';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -139,6 +138,16 @@ function downloadVideo() {
     // Limpiar después de la descarga
     recordedChunks = [];
     document.getElementById('startRecording').disabled = false;
+    document.getElementById('downloadVideo').classList.add('hidden');
+    isRecording = false;
+}
+
+function resetRecordingState() {
+    if (isRecording) {
+        stopRecording();
+    }
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('stopRecording').classList.add('hidden');
     document.getElementById('downloadVideo').classList.add('hidden');
     isRecording = false;
 }
