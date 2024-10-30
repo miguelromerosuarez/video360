@@ -2,6 +2,25 @@
 let mediaRecorder;
 let recordedChunks = [];
 let stream;
+let currentFacingMode = 'environment';
+
+// Añadir botones para escoger la cámara
+const cameraSelectionContainer = document.createElement('div');
+const frontCameraButton = document.createElement('button');
+frontCameraButton.innerText = 'Usar Cámara Frontal';
+frontCameraButton.addEventListener('click', () => {
+    currentFacingMode = 'user';
+});
+
+const backCameraButton = document.createElement('button');
+backCameraButton.innerText = 'Usar Cámara Trasera';
+backCameraButton.addEventListener('click', () => {
+    currentFacingMode = 'environment';
+});
+
+cameraSelectionContainer.appendChild(frontCameraButton);
+cameraSelectionContainer.appendChild(backCameraButton);
+document.body.appendChild(cameraSelectionContainer);
 
 document.getElementById('startRecording').addEventListener('click', startRecording);
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
@@ -32,7 +51,7 @@ function startRecording() {
 
 function startVideoRecording() {
     navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: 'environment' } },
+        video: { facingMode: { exact: currentFacingMode } },
         audio: false
     })
     .then(mediaStream => {
