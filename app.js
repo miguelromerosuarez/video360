@@ -75,6 +75,15 @@ function stopRecording() {
         document.getElementById('stopRecording').disabled = true;
         document.getElementById('stopRecording').classList.add('hidden');
         document.getElementById('downloadVideo').classList.remove('hidden');
+
+        // Mostrar el video grabado para previsualización
+        const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const recordedUrl = URL.createObjectURL(recordedBlob);
+        const previewVideo = document.createElement('video');
+        previewVideo.controls = true;
+        previewVideo.src = recordedUrl;
+        previewVideo.style.marginTop = '20px';
+        document.body.appendChild(previewVideo);
     }
 }
 
