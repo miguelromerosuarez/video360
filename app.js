@@ -7,6 +7,13 @@ document.getElementById('startRecording').addEventListener('click', startRecordi
 document.getElementById('stopRecording').addEventListener('click', stopRecording);
 document.getElementById('downloadVideo').addEventListener('click', downloadVideo);
 
+async function loadFFmpeg() {
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+    await ffmpeg.load();
+    return ffmpeg;
+}
+
 function startRecording() {
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
@@ -77,31 +84,31 @@ function stopRecording() {
     }
 }
 
-function downloadVideo() {
+async function downloadVideo() {
     const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
-    const videoElement = document.createElement('video');
-    videoElement.src = url;
-    videoElement.controls = true;
-    videoElement.playbackRate = 0.5; // Reproducir a la mitad de la velocidad para efecto de cámara lenta
 
-    document.body.appendChild(videoElement);
+    // Cargar FFmpeg para editar el video
+    const ffmpeg = await loadFFmpeg();
+    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(url));
 
-    // Esperar un tiempo para simular la cámara lenta y luego ofrecer la descarga
-    setTimeout(() => {
-        const slowMotionBlob = new Blob(recordedChunks, { type: 'video/mp4' });
-        const downloadUrl = URL.createObjectURL(slowMotionBlob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = 'video_slowmotion.mp4';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    // Aplicar el efecto de cámara lenta
+    await ffmpeg.run('-i', 'input.mp4', '-filter:v', 'setpts=2.0*PTS', 'output.mp4');
 
-        // Limpiar después de la descarga
-        recordedChunks = [];
-        document.getElementById('startRecording').disabled = false;
-        document.getElementById('downloadVideo').classList.add('hidden');
-        document.body.removeChild(videoElement);
-    }, 5000); // Esperar para permitir la reproducción lenta antes de la descarga
+    // Leer el archivo de salida y crear un blob para descargar
+    const data = ffmpeg.FS('readFile', 'output.mp4');
+    const slowMotionBlob = new Blob([data.buffer], { type: 'video/mp4' });
+    const downloadUrl = URL.createObjectURL(slowMotionBlob);
+
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = 'video_slowmotion.mp4';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Limpiar después de la descarga
+    recordedChunks = [];
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('downloadVideo').classList.add('hidden');
 }
