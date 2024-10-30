@@ -47,6 +47,7 @@ function stopRecording() {
 
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+            recordedChunks = []; // Limpiar los datos grabados
             processVideoEffects(blob);
         };
     }
@@ -64,6 +65,7 @@ async function processVideoEffects(blob) {
     canvas.width = videoElement.videoWidth;
     canvas.height = videoElement.videoHeight;
 
+    const frameRate = 30;
     const slowMotionFrames = [];
     const reverseFrames = [];
 
@@ -74,7 +76,7 @@ async function processVideoEffects(blob) {
             videoElement.onseeked = () => {
                 ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
                 slowMotionFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-                videoElement.currentTime += 0.1;
+                videoElement.currentTime += 1 / frameRate;
                 resolve();
             };
         });
@@ -87,7 +89,7 @@ async function processVideoEffects(blob) {
             videoElement.onseeked = () => {
                 ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
                 reverseFrames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-                videoElement.currentTime += 0.1;
+                videoElement.currentTime += 1 / frameRate;
                 resolve();
             };
         });
