@@ -9,6 +9,9 @@ document.getElementById('downloadVideo').addEventListener('click', downloadVideo
 
 function startRecording() {
     document.getElementById('startRecording').disabled = true;
+    document.getElementById('stopRecording').disabled = false;
+    document.getElementById('stopRecording').classList.remove('hidden');
+
     navigator.mediaDevices.getUserMedia({
         video: true,
         audio: false
@@ -27,13 +30,10 @@ function startRecording() {
             }
         };
         mediaRecorder.start();
-
-        document.getElementById('stopRecording').disabled = false;
-        document.getElementById('stopRecording').classList.remove('hidden');
     })
     .catch(error => {
         console.error('Error accessing camera:', error);
-        alert('No se pudo acceder a la cámara. Verifica los permisos del navegador y asegúrate de estar usando HTTPS.');
+        alert('No se pudo acceder a la cámara. Verifica los permisos del navegador, asegúrate de estar usando HTTPS, y de que la cámara no esté siendo utilizada por otra aplicación.');
         document.getElementById('startRecording').disabled = false;
     });
 }
@@ -43,6 +43,7 @@ function stopRecording() {
         mediaRecorder.stop();
         stream.getTracks().forEach(track => track.stop());
         document.getElementById('stopRecording').disabled = true;
+        document.getElementById('stopRecording').classList.add('hidden');
         document.getElementById('downloadVideo').classList.remove('hidden');
     }
 }
