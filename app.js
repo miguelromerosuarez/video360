@@ -42,7 +42,7 @@ function startVideoRecording() {
         videoElement.classList.remove('hidden');
         videoElement.play();
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4; codecs=avc1' });
         recordedChunks = []; // Reset recorded chunks
         mediaRecorder.ondataavailable = event => {
             if (event.data.size > 0) {
@@ -77,7 +77,7 @@ function stopRecording() {
         document.getElementById('downloadVideo').classList.remove('hidden');
 
         // Mostrar el video grabado para previsualización
-        const recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        const recordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
         const recordedUrl = URL.createObjectURL(recordedBlob);
         const previewVideo = document.createElement('video');
         previewVideo.controls = true;
@@ -93,12 +93,12 @@ function downloadVideo() {
         return;
     }
 
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = 'video.webm';
+    a.download = 'video.mp4';
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
