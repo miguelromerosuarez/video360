@@ -3,94 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video 360 Recording Webapp</title>
+    <title>Video Recording App</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        #video-container {
-            width: 80%;
-            max-width: 400px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        video {
-            width: 100%;
-            border-radius: 10px;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        #stopRecording {
-            background-color: #dc3545;
-        }
-
-        #stopRecording:hover {
-            background-color: #c82333;
-        }
-
-        #frontCameraButton, #backCameraButton {
-            background-color: #28a745;
-        }
-
-        #frontCameraButton:hover, #backCameraButton:hover {
-            background-color: #218838;
-        }
-    </style>
 </head>
 <body>
-    <h1>Video 360 Recording Webapp</h1>
+    <h1>Video Recording App</h1>
     
-    <div id="video-container">
-        <video id="video" autoplay playsinline></video>
+    <!-- Contenedor para la selección de la cámara -->
+    <div id="cameraSelectionContainer">
+        <button id="frontCameraButton">Usar Cámara Frontal</button>
+        <button id="backCameraButton">Usar Cámara Trasera</button>
     </div>
 
-    <div>
-        <button id="frontCameraButton">Front Camera</button>
-        <button id="backCameraButton">Back Camera</button>
-    </div>
-    
-    <div>
-        <button id="startRecording">Start Recording</button>
-        <button id="stopRecording" class="hidden">Stop Recording</button>
-        <button id="downloadVideo" class="hidden">Download Video</button>
+    <!-- Vista previa del video -->
+    <video id="video" class="hidden" autoplay></video>
+
+    <!-- Controles para grabar y descargar -->
+    <div id="controls">
+        <button id="startRecording">Iniciar Grabación</button>
+        <button id="stopRecording" class="hidden" disabled>Detener Grabación</button>
+        <button id="downloadVideo" class="hidden">Descargar Video</button>
     </div>
 
     <script src="app.js"></script>
