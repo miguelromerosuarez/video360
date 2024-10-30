@@ -18,6 +18,7 @@
         let isRecording = false;
         let mediaRecorder;
         let recordedChunks = [];
+        let stream;
 
         document.getElementById('startRecording').addEventListener('click', startRecording);
         document.getElementById('stopRecording').addEventListener('click', stopRecording);
@@ -46,7 +47,8 @@
                 video: { facingMode: "environment" },
                 audio: false
             })
-            .then(stream => {
+            .then(mediaStream => {
+                stream = mediaStream;
                 const videoElement = document.getElementById('video');
                 videoElement.srcObject = stream;
                 videoElement.classList.remove('hidden'); // Mostrar el video en tiempo real
@@ -86,13 +88,15 @@
                     // Crear un objeto URL para el video grabado
                     const url = URL.createObjectURL(blob);
 
-                    // Crear un elemento de video para reproducir el video grabado
+                    // Mostrar el botón de descarga del video
+                    const downloadButton = document.getElementById('downloadVideo');
+                    downloadButton.classList.remove('hidden');
+                    downloadButton.dataset.url = url;
+
+                    // Mostrar el video grabado
                     const processedVideo = document.getElementById('processedVideo');
                     processedVideo.src = url;
                     processedVideo.classList.remove('hidden');
-
-                    document.getElementById('downloadVideo').classList.remove('hidden');
-                    document.getElementById('downloadVideo').dataset.url = url;
 
                     recordedChunks = [];
                     
@@ -100,7 +104,7 @@
                     document.getElementById('stopRecording').classList.add('hidden');
                     const videoElement = document.getElementById('video');
                     videoElement.pause();
-                    videoElement.srcObject.getTracks().forEach(track => track.stop()); // Detener el stream de la cámara
+                    stream.getTracks().forEach(track => track.stop()); // Detener el stream de la cámara
                     videoElement.srcObject = null;
                     document.getElementById('startRecording').disabled = false;
                     document.getElementById('startRecording').innerText = 'Start Recording';
