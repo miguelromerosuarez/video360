@@ -10,14 +10,20 @@ document.getElementById('downloadVideo').addEventListener('click', downloadVideo
 function startRecording() {
     document.getElementById('startRecording').disabled = true;
     let countdown = 3;
-    document.getElementById('startRecording').innerText = `Starting in ${countdown}`;
-    
+    const countdownDisplay = document.createElement('div');
+    countdownDisplay.id = 'countdown';
+    countdownDisplay.style.fontSize = '2em';
+    countdownDisplay.style.marginTop = '20px';
+    countdownDisplay.innerText = countdown;
+    document.body.appendChild(countdownDisplay);
+
     const countdownInterval = setInterval(() => {
         countdown--;
-        document.getElementById('startRecording').innerText = `Starting in ${countdown}`;
+        countdownDisplay.innerText = countdown;
 
         if (countdown === 0) {
             clearInterval(countdownInterval);
+            countdownDisplay.remove();
             document.getElementById('startRecording').innerText = 'Recording...';
             startVideoRecording();
         }
