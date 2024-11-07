@@ -25,13 +25,29 @@ window.addEventListener('devicemotion', handleMotion);
 
 function handleMotion(event) {
     const acceleration = event.accelerationIncludingGravity;
-    const threshold = 15; // Umbral para iniciar la grabación (ajustable)
+    const threshold = 5; // Umbral ajustado para mayor sensibilidad // Umbral para iniciar la grabación (ajustable)
 
+    console.log('Aceleración detectada:', acceleration);
     if (Math.abs(acceleration.x) > threshold || Math.abs(acceleration.y) > threshold || Math.abs(acceleration.z) > threshold) {
         if (!isRecording) {
+            showMovementRecordingMessage();
             startRecording();
         }
     }
+}
+
+function showMovementRecordingMessage() {
+    const movementMessage = document.createElement('div');
+    movementMessage.id = 'movementMessage';
+    movementMessage.style.fontSize = '2em';
+    movementMessage.style.color = 'red';
+    movementMessage.style.marginTop = '20px';
+    movementMessage.innerText = 'Iniciando grabación debido a movimiento';
+    document.body.appendChild(movementMessage);
+
+    setTimeout(() => {
+        movementMessage.remove();
+    }, 3000);
 }
 
 function startRecording() {
